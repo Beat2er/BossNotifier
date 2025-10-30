@@ -24,7 +24,6 @@ namespace BossNotifier
     {
         public Dictionary<string, string> bossesInRaid;
         public HashSet<string> spawnedBosses;
-        public int intelCenterLevel;
 
         public void Serialize(NetDataWriter writer)
         {
@@ -60,10 +59,6 @@ namespace BossNotifier
                     BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Packet]   Spawned: {boss}");
                 }
             }
-
-            // Serialize intel level
-            writer.Put(intelCenterLevel);
-            BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Packet]   Intel Level: {intelCenterLevel}");
         }
 
         public void Deserialize(NetDataReader reader)
@@ -92,10 +87,6 @@ namespace BossNotifier
                 spawnedBosses.Add(boss);
                 BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Packet]     {boss}");
             }
-
-            // Deserialize intel level
-            intelCenterLevel = reader.GetInt();
-            BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Packet]   Intel Level: {intelCenterLevel}");
         }
     }
 

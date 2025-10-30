@@ -82,14 +82,12 @@ namespace BossNotifier
                 BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Fika]   Preparing response...");
                 BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Fika]     Bosses in raid: {BossLocationSpawnPatch.bossesInRaid.Count}");
                 BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Fika]     Spawned bosses: {BotBossPatch.spawnedBosses.Count}");
-                BossNotifierPlugin.Log(LogLevel.Debug, $"[BossNotifier] [Fika]     Intel level: {BossNotifierMono.Instance.intelCenterLevel}");
 
                 // Create response packet with current boss data
                 BossInfoPacket response = new BossInfoPacket
                 {
                     bossesInRaid = new Dictionary<string, string>(BossLocationSpawnPatch.bossesInRaid),
-                    spawnedBosses = new HashSet<string>(BotBossPatch.spawnedBosses),
-                    intelCenterLevel = BossNotifierMono.Instance.intelCenterLevel
+                    spawnedBosses = new HashSet<string>(BotBossPatch.spawnedBosses)
                 };
 
                 // Send response ONLY to the requesting peer
@@ -170,11 +168,10 @@ namespace BossNotifier
         {
             BossNotifierPlugin.Log(LogLevel.Info, "[BossNotifier] [Fika] ProcessReceivedBossInfo() called");
 
-            // Check intel center requirement
-            int intelLevel = BossNotifierMono.Instance.intelCenterLevel;
-            if (intelLevel < BossNotifierPlugin.intelCenterUnlockLevel.Value)
+            // Check intel center requirement (using client's own level)
+            if (BossNotifierMono.Instance.intelCenterLevel < BossNotifierPlugin.intelCenterUnlockLevel.Value)
             {
-                BossNotifierPlugin.Log(LogLevel.Info, $"[BossNotifier] [Fika] Intel center requirement not met ({intelLevel} < {BossNotifierPlugin.intelCenterUnlockLevel.Value})");
+                BossNotifierPlugin.Log(LogLevel.Info, $"[BossNotifier] [Fika] Intel center requirement not met ({BossNotifierMono.Instance.intelCenterLevel} < {BossNotifierPlugin.intelCenterUnlockLevel.Value})");
                 return;
             }
 
@@ -188,13 +185,16 @@ namespace BossNotifier
 
             // Display boss notifications from received data
             BossNotifierPlugin.Log(LogLevel.Info, "[BossNotifier] [Fika] Displaying boss notifications from received data");
-            DisplayBossNotificationsFromReceivedData(packet.bossesInRaid, packet.spawnedBosses, intelLevel);
+            DisplayBossNotificationsFromReceivedData(packet.bossesInRaid, packet.spawnedBosses);
         }
 
         // Display boss notifications from received packet data (Client-side)
-        private static void DisplayBossNotificationsFromReceivedData(Dictionary<string, string> bosses, HashSet<string> spawned, int intelLevel)
+        private static void DisplayBossNotificationsFromReceivedData(Dictionary<string, string> bosses, HashSet<string> spawned)
         {
             BossNotifierPlugin.Log(LogLevel.Info, "[BossNotifier] [Fika] DisplayBossNotificationsFromReceivedData() called");
+
+            // Use client's own intel center level (not host's)
+            int intelLevel = BossNotifierMono.Instance.intelCenterLevel;
 
             // Check if it's daytime to prevent showing Cultist notif (with null checks)
             bool isDayTime = false;
