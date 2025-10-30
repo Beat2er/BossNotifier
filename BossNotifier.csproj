@@ -13,6 +13,7 @@
     <Deterministic>true</Deterministic>
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Fika\**</DefaultItemExcludes>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -55,10 +56,6 @@
     <Reference Include="Comfort.Unity">
       <HintPath>References\Comfort.Unity.dll</HintPath>
     </Reference>
-    <Reference Include="Fika.Core">
-      <HintPath>References\Fika.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="spt-reflection">
       <HintPath>References\spt-reflection.dll</HintPath>
     </Reference>
@@ -73,9 +70,10 @@
     <SPTPath Condition="'$(SPTPath)' == ''">C:\SPT</SPTPath>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="if not exist &quot;$(TargetDir)BepInEx\plugins\&quot; mkdir &quot;$(TargetDir)BepInEx\plugins\&quot;" />
-    <Exec Command="if exist &quot;$(SPTPath)\BepInEx\plugins\&quot; copy /Y &quot;$(TargetPath)&quot; &quot;$(SPTPath)\BepInEx\plugins\$(TargetFileName)&quot;" />
-    <Exec Command="copy /Y &quot;$(TargetPath)&quot; &quot;$(TargetDir)BepInEx\plugins\$(TargetFileName)&quot;" />
+    <Exec Command="if not exist &quot;$(TargetDir)BepInEx\plugins\BossNotifier\&quot; mkdir &quot;$(TargetDir)BepInEx\plugins\BossNotifier\&quot;" />
+    <Exec Command="copy /Y &quot;$(TargetPath)&quot; &quot;$(TargetDir)BepInEx\plugins\BossNotifier\$(TargetFileName)&quot;" />
+    <Exec Command="if exist &quot;$(SPTPath)\BepInEx\plugins\&quot; if not exist &quot;$(SPTPath)\BepInEx\plugins\BossNotifier\&quot; mkdir &quot;$(SPTPath)\BepInEx\plugins\BossNotifier\&quot;" />
+    <Exec Command="if exist &quot;$(SPTPath)\BepInEx\plugins\&quot; copy /Y &quot;$(TargetPath)&quot; &quot;$(SPTPath)\BepInEx\plugins\BossNotifier\$(TargetFileName)&quot;" />
     <Exec Command="powershell.exe -command &quot;Compress-Archive -Force -Path '$(TargetDir)BepInEx' -DestinationPath '$(TargetDir)$(TargetName).zip'&quot;" />
   </Target>
 </Project>

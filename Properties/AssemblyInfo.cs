@@ -34,3 +34,6 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("2.0.0.0")]
 [assembly: AssemblyFileVersion("2.0.0.0")]
+
+// Make internal types visible to Fika integration assembly
+[assembly: InternalsVisibleTo("BossNotifier.Fika")]

@@ -2,6 +2,7 @@
 using SPT.Reflection.Patching;
 using SPT.Reflection.Utils;
 using System.Reflection;
+using System.IO;
 using UnityEngine;
 using EFT.Communications;
 using EFT;
@@ -22,6 +23,7 @@ namespace BossNotifier {
     [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
     public class BossNotifierPlugin : BaseUnityPlugin {
         public static PropertyInfo FikaIsPlayerHost;
+        private static Type FikaIntegrationType;
 
 
         // Configuration entries
@@ -130,8 +132,29 @@ namespace BossNotifier {
                         Log(LogLevel.Info, "[BossNotifier] ✓ Fika detected in Awake! Initializing integration...");
 
                         try {
-                            FikaIntegration.Initialize();
-                            Log(LogLevel.Info, "[BossNotifier] ✓ Fika integration initialized in Awake");
+                            // Load BossNotifier.FikaOptional.dll.bin from same directory as main DLL
+                            string pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                            string fikaPath = Path.Combine(pluginDir, "BossNotifier.FikaOptional.dll.bin");
+
+                            if (File.Exists(fikaPath)) {
+                                Log(LogLevel.Info, $"[BossNotifier] Loading Fika integration from {fikaPath}");
+                                Assembly fikaAsm = Assembly.LoadFrom(fikaPath);
+                                FikaIntegrationType = fikaAsm.GetType("BossNotifier.FikaIntegration");
+
+                                if (FikaIntegrationType != null) {
+                                    MethodInfo initMethod = FikaIntegrationType.GetMethod("Initialize", BindingFlags.Public | BindingFlags.Static);
+                                    if (initMethod != null) {
+                                        initMethod.Invoke(null, null);
+                                        Log(LogLevel.Info, "[BossNotifier] ✓ Fika integration initialized in Awake");
+                                    } else {
+                                        Log(LogLevel.Error, "[BossNotifier] Could not find Initialize method in FikaIntegration");
+                                    }
+                                } else {
+                                    Log(LogLevel.Error, "[BossNotifier] Could not load FikaIntegration type from assembly");
+                                }
+                            } else {
+                                Log(LogLevel.Info, "[BossNotifier] BossNotifier.FikaOptional.dll.bin not found, running in singleplayer mode");
+                            }
                         } catch (Exception ex) {
                             Log(LogLevel.Error, $"[BossNotifier] Failed to initialize Fika integration: {ex}");
                         }
@@ -234,6 +257,43 @@ namespace BossNotifier {
             bool isSP = !IsFikaInstalled();
             Log(LogLevel.Debug, $"[BossNotifier] IsSingleplayer: {isSP}");
             return isSP;
+        }
+
+        // Reflection-based helper methods to call FikaIntegration
+        public static void SendVicinityNotificationToClients(string message) {
+            if (FikaIntegrationType == null) {
+                Log(LogLevel.Warning, "[BossNotifier] FikaIntegration type not loaded, cannot send vicinity notification");
+                return;
+            }
+
+            try {
+                MethodInfo method = FikaIntegrationType.GetMethod("SendVicinityNotificationToClients", BindingFlags.Public | BindingFlags.Static);
+                if (method != null) {
+                    method.Invoke(null, new object[] { message });
+                } else {
+                    Log(LogLevel.Error, "[BossNotifier] Could not find SendVicinityNotificationToClients method");
+                }
+            } catch (Exception ex) {
+                Log(LogLevel.Error, $"[BossNotifier] Error calling SendVicinityNotificationToClients: {ex}");
+            }
+        }
+
+        public static void SendBossInfoRequest() {
+            if (FikaIntegrationType == null) {
+                Log(LogLevel.Warning, "[BossNotifier] FikaIntegration type not loaded, cannot send boss info request");
+                return;
+            }
+
+            try {
+                MethodInfo method = FikaIntegrationType.GetMethod("SendBossInfoRequest", BindingFlags.Public | BindingFlags.Static);
+                if (method != null) {
+                    method.Invoke(null, null);
+                } else {
+                    Log(LogLevel.Error, "[BossNotifier] Could not find SendBossInfoRequest method");
+                }
+            } catch (Exception ex) {
+                Log(LogLevel.Error, $"[BossNotifier] Error calling SendBossInfoRequest: {ex}");
+            }
         }
     }
 
@@ -338,7 +398,7 @@ namespace BossNotifier {
                 if (BossNotifierPlugin.IsFikaInstalled() && BossNotifierPlugin.IsHost())
                 {
                     BossNotifierPlugin.Log(LogLevel.Info, $"[BossNotifier] Host detected, sending vicinity notification to clients: {vicinityMessage}");
-                    FikaIntegration.SendVicinityNotificationToClients(vicinityMessage);
+                    BossNotifierPlugin.SendVicinityNotificationToClients(vicinityMessage);
                 }
             } catch (Exception ex) {
                 BossNotifierPlugin.Log(LogLevel.Error, $"[BossNotifier] Error in BotBossPatch: {ex}");
@@ -561,8 +621,8 @@ namespace BossNotifier {
                 return;
             }
 
-            // Call into FikaIntegration which has the Fika types
-            FikaIntegration.SendBossInfoRequest();
+            // Call into FikaIntegration via reflection to avoid loading Fika types when not installed
+            BossNotifierPlugin.SendBossInfoRequest();
         }
 
         // Credit to DrakiaXYZ, thank you!
