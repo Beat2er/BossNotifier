@@ -19,7 +19,7 @@ using HarmonyLib;
 #pragma warning disable IDE0051 // Remove unused private members
 
 namespace BossNotifier {
-    [BepInPlugin("Mattdokn.BossNotifier", "BossNotifier", "2.0.0")]
+    [BepInPlugin("Mattdokn.BossNotifier", "BossNotifier", "2.0.1")]
     [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
     public class BossNotifierPlugin : BaseUnityPlugin {
         public static PropertyInfo FikaIsPlayerHost;
